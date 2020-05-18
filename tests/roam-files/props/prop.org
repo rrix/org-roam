@@ -1,0 +1,5 @@
+#+TITLE: Properties
+#+PROP1: value1
+#+PROP2: value2 value2
+
+This file is used to test functionality for =(org-roam--cache-global-props)=
