@@ -1,0 +1,4 @@
+#+ROAM_TAGS: "t1" "t2 with space" t3
+#+TITLE: Tags
+
+This file has no tags, and should not yield any tags on extracting via =#+ROAM_TAGS=.

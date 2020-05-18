@@ -709,6 +709,17 @@ Examples:
   (let ((current (car (org-roam--extract-ref))))
     (eq current type)))
 
+;;;; Global Property Caching
+(defcustom org-roam-cached-global-props nil
+  "Properties which will be stored in the org-roam db properties table."
+  :type '(repeat string)
+  :group 'org-roam)
+
+(defun org-roam--cache-global-props ()
+  "Extract props specified in [`org-roam-cached-global-props'] from current buffer and return the type and the key of the ref."
+  (when org-roam-cached-global-props
+    (org-roam--extract-global-props org-roam-cached-global-props)))
+
 ;;;; Title/Path/Slug conversion
 (defun org-roam--path-to-slug (path)
   "Return a slug from PATH."

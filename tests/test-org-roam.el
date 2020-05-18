@@ -225,6 +225,31 @@
                 :to-equal
                 '("t1" "t2 with space" "t3" "tags"))))))
 
+(describe "Property extraction"
+  :var (org-roam-cached-global-props)
+  (before-all
+    (test-org-roam--init))
+
+  (after-all
+    (test-org-roam--teardown))
+
+  (cl-flet
+      ((test (fn file)
+             (let* ((fname (test-org-roam--abs-path file))
+                    (buf (find-file-noselect fname)))
+               (with-current-buffer buf
+                 (funcall fn)))))
+    (it "extracts from prop"
+      (let ((org-roam-cached-global-props '("PROP1" "PROP2")))
+        (expect (test #'org-roam--cache-global-props
+                      "props/prop.org")
+                :to-have-same-items-as
+                '(("PROP1" . "value1") ("PROP2" . "value2 value2")))
+        (expect (test #'org-roam--cache-global-props
+                      "props/no_prop.org")
+                :to-equal
+                nil)))))
+
 ;;; Tests
 (xdescribe "org-roam-db-build-cache"
   (before-each
@@ -282,6 +307,11 @@
     (expect (org-roam-db-query [:select * :from refs])
             :to-have-same-items-as
             (list (list "https://google.com/" (test-org-roam--abs-path "web_ref.org") "website")))
+
+    (expect (org-roam-db-query [:select * :from keywords])
+            :to-have-same-items-as
+            (list (list (test-org-roam--abs-path "props/prop.org") "PROP1" "value1")
+                  (list (test-org-roam--abs-path "props/prop.org") "PROP2" "value2 value2")))
 
     ;; Expect rebuilds to be really quick (nothing changed)
     (expect (org-roam-db-build-cache)
