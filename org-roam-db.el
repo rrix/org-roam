@@ -142,7 +142,12 @@ SQL can be either the emacsql vector representation, or a string."
     (refs
      [(ref :unique :not-null)
       (file :not-null)
-      (type :not-null)])))
+      (type :not-null)])
+
+    (keywords
+     [(file :not-null)
+      (keyword :not-null)
+      (value :not-null)])))
 
 (defun org-roam-db--init (db)
   "Initialize database DB with the correct schema and user version."
