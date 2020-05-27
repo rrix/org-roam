@@ -718,7 +718,9 @@ Examples:
 (defun org-roam--cache-global-props ()
   "Extract props specified in [`org-roam-cached-global-props'] from current buffer and return the type and the key of the ref."
   (when org-roam-cached-global-props
-    (org-roam--extract-global-props org-roam-cached-global-props)))
+    (seq-filter
+     #'cdr
+     (org-roam--extract-global-props org-roam-cached-global-props))))
 
 ;;;; Title/Path/Slug conversion
 (defun org-roam--path-to-slug (path)
