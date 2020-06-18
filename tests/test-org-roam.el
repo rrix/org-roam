@@ -225,8 +225,8 @@
                 :to-equal
                 '("t1" "t2 with space" "t3" "tags"))))))
 
-(describe "Property extraction"
-  :var (org-roam-cached-global-props)
+(describe "Keyword extraction"
+  :var (org-roam-cached-keywords)
   (before-all
     (test-org-roam--init))
 
@@ -240,12 +240,12 @@
                (with-current-buffer buf
                  (funcall fn)))))
     (it "extracts from prop"
-      (let ((org-roam-cached-global-props '("PROP1" "PROP2")))
-        (expect (test #'org-roam--cache-global-props
+      (let ((org-roam-cached-keywords '("PROP1" "PROP2")))
+        (expect (test #'org-roam--extract-keywords
                       "props/prop.org")
-                :to-have-same-items-as
-                '(("PROP1" . "value1") ("PROP2" . "value2 value2")))
-        (expect (test #'org-roam--cache-global-props
+                :to-equal
+                '(("PROP2" . "value2 value2") ("PROP1" . "value1")))
+        (expect (test #'org-roam--extract-keywords
                       "props/no_prop.org")
                 :to-equal
                 nil)))))
