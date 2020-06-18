@@ -770,17 +770,17 @@ Examples:
     (eq current type)))
 
 ;;;; Global Property Caching
-(defcustom org-roam-cached-global-props nil
-  "Properties which will be stored in the org-roam db properties table."
+(defcustom org-roam-cached-keywords nil
+  "Keyword properties which will be stored in the org-roam db keywords table."
   :type '(repeat string)
   :group 'org-roam)
 
-(defun org-roam--cache-global-props ()
-  "Extract props specified in [`org-roam-cached-global-props'] from current buffer and return the type and the key of the ref."
-  (when org-roam-cached-global-props
+(defun org-roam--extract-keywords ()
+  "Extract props specified in [`org-roam-cached-keywords'] from current buffer and return the type and the key of the ref."
+  (when org-roam-cached-keywords
     (seq-filter
      #'cdr
-     (org-roam--extract-global-props org-roam-cached-global-props))))
+     (org-roam--extract-global-props org-roam-cached-keywords))))
 
 ;;;; Title/Path/Slug conversion
 (defun org-roam--path-to-slug (path)

@@ -259,8 +259,8 @@
               `(["e84d0630-efad-4017-9059-5ef917908823" ,(test-org-roam--abs-path "headlines/headline.org")]
                 ["801b58eb-97e2-435f-a33e-ff59a2f0c213" ,(test-org-roam--abs-path "headlines/headline.org")])))))
 
-(describe "Property extraction"
-  :var (org-roam-cached-global-props)
+(describe "Keyword extraction"
+  :var (org-roam-cached-keywords)
   (before-all
     (test-org-roam--init))
 
@@ -274,12 +274,12 @@
                (with-current-buffer buf
                  (funcall fn)))))
     (it "extracts from prop"
-      (let ((org-roam-cached-global-props '("PROP1" "PROP2")))
-        (expect (test #'org-roam--cache-global-props
+      (let ((org-roam-cached-keywords '("PROP1" "PROP2")))
+        (expect (test #'org-roam--extract-keywords
                       "props/prop.org")
-                :to-have-same-items-as
-                '(("PROP1" . "value1") ("PROP2" . "value2 value2")))
-        (expect (test #'org-roam--cache-global-props
+                :to-equal
+                '(("PROP2" . "value2 value2") ("PROP1" . "value1")))
+        (expect (test #'org-roam--extract-keywords
                       "props/no_prop.org")
                 :to-equal
                 nil)))))
