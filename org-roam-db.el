@@ -47,6 +47,7 @@
 (declare-function org-roam--extract-tags                   "org-roam")
 (declare-function org-roam--extract-headlines              "org-roam")
 (declare-function org-roam--extract-links                  "org-roam")
+(declare-function org-roam--extract-keywords               "org-roam")
 (declare-function org-roam--list-all-files                 "org-roam")
 (declare-function org-roam--path-to-slug                   "org-roam")
 (declare-function org-roam--file-name-extension            "org-roam")
@@ -303,6 +304,15 @@ Insertions can fail if the key is already in the database."
                              (vector key)))))
        nil))))
 
+(defun org-roam-db--insert-keywords (file keywords)
+  "Insert KEYWORDS for a FILE into the Org-roam cache."
+  (org-roam-db-query
+   [:insert :into keywords
+    :values $v1]
+   (maplist (lambda (keyword)
+              (vector file (caar keyword) (cdar keyword)))
+            keywords)))
+
 ;;;;; Fetching
 (defun org-roam-db--get-current-files ()
   "Return a hash-table of file to the hash of its file contents."
@@ -453,6 +463,15 @@ connections, nil is returned."
     (when-let ((headlines (org-roam--extract-headlines)))
       (org-roam-db--insert-headlines headlines))))
 
+(defun org-roam-db--update-keywords ()
+  "Update the keywords of the current buffer in the cache."
+  (let ((file (file-truename (buffer-file-name))))
+    (org-roam-db-query [:delete :from keywords
+                        :where (= file $s1)]
+                       file)
+    (when-let ((keywords (org-roam--extract-keywords)))
+      (org-roam-db--insert-keywords file keywords))))
+
 (defun org-roam-db--update-file (&optional file-path)
   "Update Org-roam cache for FILE-PATH."
   (when (org-roam--org-roam-file-p file-path)
@@ -467,6 +486,7 @@ connections, nil is returned."
             (org-roam-db--update-titles)
             (org-roam-db--update-refs)
             (org-roam-db--update-headlines)
+            (org-roam-db--update-keywords)
             (org-roam-db--update-links))
           (org-roam-buffer--update-maybe :redisplay t))))))
 
@@ -486,6 +506,7 @@ If FORCE, force a rebuild of the cache from scratch."
          (tag-count 0)
          (title-count 0)
          (ref-count 0)
+         (keyword-count 0)
          (deleted-count 0))
     (emacsql-with-transaction (org-roam-db)
       ;; Two-step building
@@ -525,6 +546,9 @@ If FORCE, force a rebuild of the cache from scratch."
                  :values $v1]
                 (vector file tags))
                (setq tag-count (1+ tag-count)))
+             (when-let* ((keywords (org-roam--extract-keywords)))
+               (org-roam-db--insert-keywords file keywords)
+               (setq keyword-count (+ keyword-count (length keywords))))
              (let ((titles (or (org-roam--extract-titles)
                                (list (org-roam--path-to-slug file)))))
                (org-roam-db--insert-titles file titles)
