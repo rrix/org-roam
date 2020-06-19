@@ -47,6 +47,7 @@
 (declare-function org-roam--extract-tags                   "org-roam")
 (declare-function org-roam--extract-headlines              "org-roam")
 (declare-function org-roam--extract-links                  "org-roam")
+(declare-function org-roam--extract-keywords               "org-roam")
 (declare-function org-roam--list-all-files                 "org-roam")
 (declare-function org-roam-buffer--update-maybe            "org-roam-buffer")
 
@@ -256,6 +257,15 @@ This is equivalent to removing the node from the graph."
      [:insert :into refs :values $v1]
      (list (vector key file type)))))
 
+(defun org-roam-db--insert-keywords (file keywords)
+  "Insert KEYWORDS for a FILE into the Org-roam cache."
+  (org-roam-db-query
+   [:insert :into keywords
+    :values $v1]
+   (maplist (lambda (keyword)
+              (vector file (caar keyword) (cdar keyword)))
+            keywords)))
+
 ;;;;; Fetching
 (defun org-roam-db--get-current-files ()
   "Return a hash-table of file to the hash of its file contents."
@@ -385,6 +395,15 @@ connections, nil is returned."
     (when-let ((headlines (org-roam--extract-headlines)))
       (org-roam-db--insert-headlines headlines))))
 
+(defun org-roam-db--update-keywords ()
+  "Update the keywords of the current buffer in the cache."
+  (let ((file (file-truename (buffer-file-name))))
+    (org-roam-db-query [:delete :from keywords
+                        :where (= file $s1)]
+                       file)
+    (when-let ((keywords (org-roam--extract-keywords)))
+      (org-roam-db--insert-keywords file keywords))))
+
 (defun org-roam-db--update-file (&optional file-path)
   "Update Org-roam cache for FILE-PATH."
   (when (org-roam--org-roam-file-p file-path)
@@ -399,6 +418,7 @@ connections, nil is returned."
           (org-roam-db--update-refs)
           (org-roam-db--update-headlines)
           (org-roam-db--update-links)
+          (org-roam-db--update-keywords)
           (org-roam-buffer--update-maybe :redisplay t))))))
 
 (defun org-roam-db-build-cache (&optional force)
@@ -410,7 +430,7 @@ If FORCE, force a rebuild of the cache from scratch."
   (org-roam-db) ;; To initialize the database, no-op if already initialized
   (let* ((org-roam-files (org-roam--list-all-files))
          (current-files (org-roam-db--get-current-files))
-         all-files all-headlines all-links all-titles all-refs all-tags)
+         all-files all-headlines all-links all-titles all-refs all-tags all-keywords)
     ;; Two-step building
     ;; First step: Rebuild files and headlines
     (dolist (file org-roam-files)
@@ -449,6 +469,11 @@ If FORCE, force a rebuild of the cache from scratch."
             (let ((titles (org-roam--extract-titles)))
               (push (vector file titles)
                     all-titles))
+            (when-let* ((keywords (org-roam--extract-keywords)))
+              (mapc (lambda (keyword)
+                      (push (vector file (car keyword) (cdr keyword))
+                            all-keywords))
+                    keywords))
             (when-let* ((ref (org-roam--extract-ref))
                         (type (car ref))
                         (key (cdr ref)))
@@ -477,20 +502,27 @@ If FORCE, force a rebuild of the cache from scratch."
        [:insert :into refs
         :values $v1]
        all-refs))
+    (when all-keywords
+      (org-roam-db-query
+       [:insert :into keywords
+        :values $v1]
+       all-keywords))
     (let ((stats (list :files (length all-files)
                        :headlines (length all-headlines)
                        :links (length all-links)
                        :tags (length all-tags)
                        :titles (length all-titles)
                        :refs (length all-refs)
+                       :keywords (length all-keywords)
                        :deleted (length (hash-table-keys current-files)))))
-      (org-roam-message "files: %s, headlines: %s, links: %s, tags: %s, titles: %s, refs: %s, deleted: %s"
+      (org-roam-message "files: %s, headlines: %s, links: %s, tags: %s, titles: %s, refs: %s, deleted: %s, keywords: %s"
                         (plist-get stats :files)
                         (plist-get stats :headlines)
                         (plist-get stats :links)
                         (plist-get stats :tags)
                         (plist-get stats :titles)
                         (plist-get stats :refs)
+                        (plist-get stats :keywords)
                         (plist-get stats :deleted))
       stats)))
 
