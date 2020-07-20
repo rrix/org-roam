@@ -846,10 +846,9 @@ to the file."
                  rows)
     (dolist (row rows completions)
       (pcase-let ((`(,file-path ,title ,tags) row))
-        (let ((k (concat
+        (let ((k (concat title
                       (when tags
-                        (format "(%s) " (s-join org-roam-tag-separator tags)))
-                      title))
+                        (format " (%s)" (s-join org-roam-tag-separator tags)))))
                   (v (list :path file-path :title title)))
               (push (cons k v) completions))))))
 
