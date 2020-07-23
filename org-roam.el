@@ -372,6 +372,7 @@ E.g. (\".org\") => (\"*.org\" \"*.org.gpg\")"
   "Return all Org-roam files located recursively within DIR, using find, provided as EXECUTABLE."
   (let* ((globs (org-roam--list-files-search-globs org-roam-file-extensions))
          (command (s-join " " `(,executable "-L" ,dir "-type f \\("
+                                            "-not -wholename \"*.stversions*\""
                                             ,(s-join " -o " (mapcar (lambda (glob) (concat "-name " glob)) globs)) "\\)"))))
     (org-roam--shell-command-files command)))
 
