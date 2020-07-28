@@ -324,10 +324,11 @@ Insertions can fail if the key is already in the database."
 
 (defun org-roam-db--get-titles (file)
   "Return the titles of FILE from the cache."
-  (caar (org-roam-db-query [:select [title] :from titles
-                            :where (= file $s1)
-                            :limit 1]
-                           file)))
+  (mapcar #'car
+          (org-roam-db-query [:select [title]
+                              :from titles
+                              :where (= file $s1)]
+                             file)))
 
 (defun org-roam-db--connected-component (file)
   "Return all files reachable from/connected to FILE, including the file itself.
